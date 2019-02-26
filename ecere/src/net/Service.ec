@@ -70,6 +70,8 @@ public:
    property int port { set { port = value; } get { return port; } };
    property Socket firstClient { get { return sockets.first; } };
    property bool processAlone { get { return processAlone; } set { processAlone = value; } };
+   property int backlog { set { backlog = value; } get { return backlog; } };
+   property const char *bindAddr { set { inet_aton(value, &bindAddr); } get { return inet_ntoa(bindAddr); } };
 
    virtual void OnAccept();
 
@@ -97,7 +99,7 @@ public:
 
          a.sin_family=AF_INET;
          a.sin_port=htons((uint16)port);
-         a.sin_addr.s_addr=INADDR_ANY;
+         a.sin_addr.s_addr=bindAddr.s_addr;
    #ifdef DEBUG_SOCKETS
          Log("Service Socket: %x\n", s);
    #endif
@@ -105,7 +107,7 @@ public:
          setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(val));
          if(!bind(s,(SOCKADDR *)&a, sizeof(a)))
          {
-            if(!listen(s,5))
+            if(!listen(s,backlog))
             {
                network.mutex.Wait();
                network.services.Add(this);
@@ -171,17 +173,12 @@ public:
 
    bool Process()
    {
-      return ProcessTimeOut(0.2); // 200 ms is a long time!
-   }
-
-   bool ProcessTimeOut(Seconds timeOut)
-   {
       bool gotEvent = false;
       if(s != -1)
       {
          fd_set rs, ws, es;
          int selectResult;
-         struct timeval tvTO = {0, (int)(timeOut * 1000000) };
+         struct timeval tvTO = {0, 200000};
 
          FD_ZERO(&rs);
          FD_ZERO(&ws);
@@ -217,6 +214,9 @@ private:
    Service()
    {
       Network_Initialize();
+      bindAddr.s_addr=INADDR_ANY;
+      backlog=5;
+      port=8080;
    }
 
    ~Service()
@@ -225,6 +225,7 @@ private:
    }
 
    int port;
+   int backlog;
    Service prev, next;
 
    SOCKET s;
@@ -232,5 +233,6 @@ private:
    bool destroyed;
    bool accepted;
    bool processAlone;
+   IN_ADDR bindAddr;
 }
 #endif
