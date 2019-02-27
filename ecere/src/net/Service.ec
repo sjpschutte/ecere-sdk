@@ -71,7 +71,7 @@ public:
    property Socket firstClient { get { return sockets.first; } };
    property bool processAlone { get { return processAlone; } set { processAlone = value; } };
    property int backlog { set { backlog = value; } get { return backlog; } };
-   property const char *bindAddr { set { inet_aton(value, &bindAddr); } get { return inet_ntoa(bindAddr); } };
+   property const char *bindAddr { set { bindAddr.s_addr=inet_addr(value); } get { return inet_ntoa(bindAddr); } };
 
    virtual void OnAccept();
 
@@ -100,6 +100,7 @@ public:
          a.sin_family=AF_INET;
          a.sin_port=htons((uint16)port);
          a.sin_addr.s_addr=bindAddr.s_addr;
+         //a.sin_addr.s_addr=INADDR_ANY;
    #ifdef DEBUG_SOCKETS
          Log("Service Socket: %x\n", s);
    #endif
