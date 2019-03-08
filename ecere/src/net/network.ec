@@ -87,7 +87,6 @@ static class NetworkThread : Thread
 
          if(ns)
          {
-            struct timeval tv = { 0, 0 }; // TESTING 0 INSTEAD OF (int)(1000000 / 18.2) };
 
             network.selectRS = network.readSet, network.selectWS = network.writeSet, network.selectES = network.exceptSet;
 
@@ -95,7 +94,7 @@ static class NetworkThread : Thread
    #ifdef DEBUG_SOCKETS
             Log("[N] Waiting for network event...\n");
    #endif
-            if(select(ns, &network.selectRS, &network.selectWS, &network.selectES, &tv))
+            if(select(ns, &network.selectRS, &network.selectWS, &network.selectES, 0))
             {
                network.mutex.Wait();
                network.networkEvent = true;
@@ -108,11 +107,6 @@ static class NetworkThread : Thread
    #endif
                network.mutex.Release();
                network.selectSemaphore.Wait();
-               network.mutex.Wait();
-            }
-            else
-            {
-               ecere::sys::Sleep(1 / 18.2f);
                network.mutex.Wait();
             }
          }
